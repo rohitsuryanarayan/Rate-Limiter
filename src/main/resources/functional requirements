@@ -1,0 +1,158 @@
+Functional Requirements (What the system should do)
+🌐 Limit Requests per Client
+Limit number of API calls per client (user ID, API key).
+Example: 100 requests per 15 minutes.
+
+⏱ Support Different Limiting Strategies
+Token Bucket
+Fixed Window
+Sliding Window
+Leaky Bucket (optional)
+
+🔧 Configurable Limits
+Limits (rate, time window) should be configurable via properties or admin APIs.
+
+🧑‍💻 Identify Clients
+Support multiple ways to identify clients:
+API keys
+User IDs (from JWT/auth headers)
+
+🚫 Deny Requests Exceeding Limit
+Respond with HTTP 429 Too Many Requests if client exceeds their limit.
+Include headers like Retry-After.
+
+📊 Monitoring and Stats
+Provide API to query current rate limits, usage, resets, etc.
+Example: GET /rate-limit/status?apiKey=abc123
+
+🧪 Admin APIs
+Add/remove/update limits per client.
+Enable/disable rate limiting globally or for a specific route/client.
+
+🔒 Secure APIs
+Admin routes should require authentication (e.g., basic auth, JWT, etc.).
+
+♻️ Persistence (optional)
+Store client configurations and usage statistics in DB (Redis, Mongo, etc.).
+
+☁️ Multi-tenant (optional/advanced)
+Support different tenants with their own limits and usage tracking.
+
+
+Admin functions
+Get list of rate limiting strategies
+Get stats for a specific user(API requests with time) [user_id, API key]
+Whitelist some user(rate limiting not should not be applied)
+Update configs for the rate limiter
+
+User functions
+Access a resource
+
+
+REST APIs
+Admin APIs
+{
+  "method": "GET",
+  "endpoint": "/rate-limiter/api/strategies",
+  "description": "Returns the list of available rate limiting strategies.",
+  "response": ["fixed-window", "sliding-window", "token-bucket"]
+}
+
+
+{
+  "method": "GET",
+  "endpoint": "/rate-limiter/api/user-stats/user/{userId}",
+  "description": "Returns the usage stats (e.g., request timestamps) of a user by user ID.",
+  "response": {
+    "userId": "user123",
+    "requests": [
+      "2025-07-28T10:01:12Z",
+      "2025-07-28T10:01:14Z",
+      "2025-07-28T10:01:16Z"
+    ]
+  }
+}
+
+
+{
+  "method": "GET",
+  "endpoint": "/rate-limiter/api/user-stats/apikey/{apiKey}",
+  "description": "Returns the usage stats of a user by API key.",
+  "response": {
+    "apiKey": "abc123",
+    "requests": [
+      "2025-07-28T09:50:01Z",
+      "2025-07-28T09:50:02Z"
+    ]
+  }
+}
+
+
+{
+  "method": "POST",
+  "endpoint": "/rate-limiter/api/whitelist",
+  "description": "Whitelists a user by user ID or API key.",
+  "body": {
+    "userId": "user123"  // or "apiKey": "abc123"
+  },
+  "response": {
+    "message": "User whitelisted successfully"
+  }
+}
+
+
+{
+  "method": "PUT",
+  "endpoint": "/rate-limiter/api/strategies",
+  "description": "Update configs for one or more rate limiting strategies.",
+  "body": [
+    {
+      "strategy": "fixed-window",
+      "config": {
+        "limit": 100,
+        "windowMs": 60000
+      }
+    },
+    {
+      "strategy": "sliding-window",
+      "config": {
+        "limit": 200,
+        "windowMs": 60000
+      }
+    }
+  ],
+  "response": {
+    "message": "Strategy configs updated successfully"
+  }
+}
+
+
+User APIs
+{
+  "method": "GET",
+  "endpoint": "/product/api/{userId}",  // or /product/api/{apiKey}
+  "description": "Returns a list of products. Rate limiting is enforced.",
+  "response": [
+    {
+      "id": 1,
+      "name": "Laptop",
+      "price": 79999
+    },
+    {
+      "id": 2,
+      "name": "Keyboard",
+      "price": 2499
+    }
+  ]
+}
+
+{
+  "status": 429,
+  "message": "Too Many Requests"
+}
+
+
+Interceptors
+HttpServlet request, life cycle, dispatcher servlet
+Interceptor Registry
+
