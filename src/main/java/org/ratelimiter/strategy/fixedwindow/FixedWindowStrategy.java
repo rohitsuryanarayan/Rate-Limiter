@@ -1,6 +1,6 @@
-package org.ratelimiter.strategy;
+package org.ratelimiter.strategy.fixedwindow;
 
-import org.ratelimiter.RateLimitingStrategy;
+import org.ratelimiter.strategy.RateLimitingStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

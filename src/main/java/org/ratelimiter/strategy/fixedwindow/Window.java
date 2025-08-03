@@ -1,4 +1,4 @@
-package org.ratelimiter.strategy;
+package org.ratelimiter.strategy.fixedwindow;
 
 import lombok.Getter;
 import lombok.Setter;

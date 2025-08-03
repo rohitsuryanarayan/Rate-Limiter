@@ -1,7 +1,7 @@
 package org.ratelimiter.config;
 
 import lombok.Setter;
-import org.ratelimiter.RateLimitingStrategy;
+import org.ratelimiter.strategy.RateLimitingStrategy;
 import org.ratelimiter.service.StrategyRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

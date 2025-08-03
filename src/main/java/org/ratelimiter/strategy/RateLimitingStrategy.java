@@ -1,4 +1,4 @@
-package org.ratelimiter;
+package org.ratelimiter.strategy;
 
 import org.springframework.stereotype.Component;
 

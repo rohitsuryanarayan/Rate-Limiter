@@ -1,6 +1,6 @@
 package org.ratelimiter.service;
 
-import org.ratelimiter.RateLimitingStrategy;
+import org.ratelimiter.strategy.RateLimitingStrategy;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
