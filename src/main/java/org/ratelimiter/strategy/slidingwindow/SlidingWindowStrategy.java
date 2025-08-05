@@ -12,12 +12,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SlidingWindowStrategy implements RateLimitingStrategy {
-    private int maxRequests;
-    private long windowSizeInMillis;
+    private final int maxRequests;
+    private final long windowSizeInMillis;
     private final Map<String, Deque<Long>> logs = new ConcurrentHashMap<>();
 
     SlidingWindowStrategy(@Value("${ratelimiter.fixed.max-requests:1}") int maxRequestsPerWindow,
-                          @Value("${ratelimiter.fixed.window-ms:1000}") int windowSizeInMillis) {
+                          @Value("${ratelimiter.fixed.window-ms:100000}") int windowSizeInMillis) {
         this.maxRequests = maxRequestsPerWindow;
         this.windowSizeInMillis = windowSizeInMillis;
     }
@@ -25,10 +25,12 @@ public class SlidingWindowStrategy implements RateLimitingStrategy {
     @Override
     public boolean allowRequest(String client_id) {
         long now = System.currentTimeMillis();
-        synchronized (getLockForKey(client_id)) {
-            Deque<Long> deque = logs.computeIfAbsent(client_id, k->new ArrayDeque<>());
+
+        Deque<Long> deque = logs.computeIfAbsent(client_id, k->new ArrayDeque<>());
+
+        synchronized (deque) {
             long boundary = now - windowSizeInMillis;
-            while(!deque.isEmpty() || deque.peekFirst() < boundary) {
+            while(!deque.isEmpty() && deque.peekFirst() < boundary) {
                 deque.pollFirst();
             }
             if(deque.size() < maxRequests) {
@@ -37,10 +39,6 @@ public class SlidingWindowStrategy implements RateLimitingStrategy {
             }
             return false;
         }
-    }
-
-    private Object getLockForKey(String key) {
-        return logs.computeIfAbsent(key, k->new ArrayDeque<>());
     }
 
     @Override

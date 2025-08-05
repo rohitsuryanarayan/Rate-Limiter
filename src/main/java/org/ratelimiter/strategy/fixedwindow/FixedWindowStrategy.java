@@ -6,16 +6,18 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 public class FixedWindowStrategy implements RateLimitingStrategy {
     private final int maxRequestsPerWindow;
     private final long windowSizeInMillis;
 
-    private final Map<String, Window> windows = new HashMap<>();
+    private final Map<String, Window> windows = new ConcurrentHashMap<>();
 
     FixedWindowStrategy(@Value("${ratelimiter.fixed.max-requests:1}") int maxRequestsPerWindow,
-                        @Value("${ratelimiter.fixed.window-ms:1000}") int windowSizeInMillis) {
+                        @Value("${ratelimiter.fixed.window-ms:10000}") int windowSizeInMillis) {
         this.maxRequestsPerWindow = maxRequestsPerWindow;
         this.windowSizeInMillis = windowSizeInMillis;
     }
@@ -23,16 +25,21 @@ public class FixedWindowStrategy implements RateLimitingStrategy {
     @Override
     public boolean allowRequest(String client_id) {
         long currentWindow = System.currentTimeMillis() / windowSizeInMillis;
-        if(windows.containsKey(client_id)) {
-            Window w = windows.get(client_id);
-            if(w.getCount() == maxRequestsPerWindow)    return false;
-            w.setCount(w.getCount()+1);
-        }
-        else {
-            Window w = new Window(currentWindow, 1);
-            windows.put(client_id, w);
-        }
-        return true;
+        AtomicBoolean allowed = new AtomicBoolean(true);
+        windows.compute(client_id, (key,window)-> {
+            if(window == null || window.getWindowId() != currentWindow) {
+                return new Window(currentWindow, 1);
+            }
+            if(window.getCount() < maxRequestsPerWindow) {
+                allowed.set(true);
+                window.incrementCount();
+            }
+            else {
+                allowed.set(false);
+            }
+            return window;
+        });
+        return allowed.get();
     }
     @Override
     public String getName() {

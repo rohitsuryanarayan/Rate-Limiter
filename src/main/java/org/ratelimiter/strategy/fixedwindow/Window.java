@@ -5,13 +5,19 @@ import lombok.Setter;
 
 public class Window {
     @Getter
-    private long windowId;
-    @Getter
-    @Setter
+    private final long windowId;
     private int count;
 
-    Window(long windowId, int count) {
+    Window(long windowId, int initialCount) {
         this.windowId = windowId;
-        this.count = count;
+        this.count = initialCount;
+    }
+
+    public synchronized int getCount() {
+        return count;
+    }
+
+    public synchronized void incrementCount() {
+        count++;
     }
 }

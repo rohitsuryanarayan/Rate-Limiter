@@ -15,6 +15,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     public void addInterceptors(InterceptorRegistry interceptorRegistry) {
         interceptorRegistry.addInterceptor(rateLimitingInterceptor)
-                .addPathPatterns("/**");
+                .addPathPatterns("/user");
     }
 }
